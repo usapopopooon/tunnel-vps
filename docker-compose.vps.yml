@@ -1,0 +1,44 @@
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: tunnel-vps-wireguard
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-Asia/Tokyo}
+      SERVERURL: ${VPS_PUBLIC_HOST:?Set VPS_PUBLIC_HOST to the VPS public IPv4 or domain}
+      SERVERPORT: ${WG_PORT:-51820}
+      PEERS: home
+      PEERDNS: ${PEERDNS:-auto}
+      INTERNAL_SUBNET: ${WG_SUBNET:-10.13.13.0}
+      ALLOWEDIPS: ${WG_ALLOWED_IPS:-10.13.13.0/24}
+      PERSISTENTKEEPALIVE_PEERS: all
+      LOG_CONFS: ${LOG_CONFS:-false}
+      INTERFACE: ${WG_INTERFACE:-wg0}
+    volumes:
+      - ./data/wireguard:/config
+      - /lib/modules:/lib/modules:ro
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
+  port-forwarder:
+    build:
+      context: ./forwarder
+    container_name: tunnel-vps-port-forwarder
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    environment:
+      UDP_PORTS: ${UDP_PORTS:-14159}
+      TCP_PORTS: ${TCP_PORTS:-}
+      HOME_WG_IP: ${HOME_WG_IP:-10.13.13.2}
+      VPS_WG_IP: ${VPS_WG_IP:-10.13.13.1}
+      WG_INTERFACE: ${WG_INTERFACE:-wg0}
+    depends_on:
+      - wireguard
+    restart: unless-stopped

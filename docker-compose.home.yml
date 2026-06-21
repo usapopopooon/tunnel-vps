@@ -1,0 +1,19 @@
+services:
+  wireguard-client:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: tunnel-home-wireguard
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-Asia/Tokyo}
+      INTERFACE: ${WG_INTERFACE:-wg0}
+    volumes:
+      - ./data/home-wireguard:/config
+      - /lib/modules:/lib/modules:ro
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
