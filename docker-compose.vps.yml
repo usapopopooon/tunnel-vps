@@ -42,3 +42,33 @@ services:
     depends_on:
       - wireguard
     restart: unless-stopped
+
+  minecraft-forwarder:
+    build:
+      context: ./forwarder
+    container_name: tunnel-vps-minecraft-forwarder
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    environment:
+      UDP_PORTS: "19132"
+      TCP_PORTS: "25565"
+      HOME_WG_IP: ${MINECRAFT_HOME_WG_IP:?Set MINECRAFT_HOME_WG_IP}
+      VPS_WG_IP: 10.13.13.1
+      WG_INTERFACE: wg0
+    depends_on:
+      - wireguard
+    restart: unless-stopped
+
+  minecraft-ipv6-forwarder:
+    build:
+      context: ./ipv6-forwarder
+    container_name: tunnel-vps-minecraft-ipv6-forwarder
+    network_mode: host
+    environment:
+      TCP_PORTS: "25565"
+      UDP_PORTS: "19132"
+      TARGET_IPV4: ${MINECRAFT_HOME_WG_IP:?Set MINECRAFT_HOME_WG_IP}
+    depends_on:
+      - wireguard
+    restart: unless-stopped
